@@ -90,6 +90,12 @@ permissions:
 "@
     Write-Utf8NoBom (Join-Path $DriverDir 'config.yml') ($config.TrimStart())
 
+    $searchParameters = @'
+ssdp:
+  - searchTerm: urn:schemas-upnp-org:device:MediaRenderer:1
+'@
+    Write-Utf8NoBom (Join-Path $DriverDir 'search-parameters.yaml') $searchParameters
+
     # webOS 26 fallback manifest.
     # Follow the lgtv2 2.0.1/2.0.2 compatibility approach: clone the legacy signed manifest,
     # remove the signed section, and add the permissions needed by the unsigned fallback.
