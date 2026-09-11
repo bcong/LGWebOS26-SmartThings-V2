@@ -165,6 +165,7 @@ function init_connection(device)
 
   local wssaddr = device:get_field('WSSaddr')
 '@
+    $connectionOld = $connectionOld.Replace("`r`n", "`n")
     $connectionNew = @'
 function init_connection(device)
 
@@ -174,6 +175,7 @@ function init_connection(device)
 
   local wssaddr = device:get_field('WSSaddr')
 '@
+    $connectionNew = $connectionNew.Replace("`r`n", "`n")
     if (-not $init.Contains($connectionOld)) { throw 'init.lua: could not find connection patch location.' }
     $init = $init.Replace($connectionOld, $connectionNew)
 
@@ -181,11 +183,13 @@ function init_connection(device)
     device:emit_event(cap_status.status('Registered'))
     init_device(device)
 '@
+    $registeredOld = $registeredOld.Replace("`r`n", "`n")
     $registeredNew = @'
     device:emit_event(cap_status.status('Registered'))
     device:set_field('unsigned_pairing_attempted', false)
     init_device(device)
 '@
+    $registeredNew = $registeredNew.Replace("`r`n", "`n")
     if (-not $init.Contains($registeredOld)) { throw 'init.lua: could not find registered-handler patch location.' }
     $init = $init.Replace($registeredOld, $registeredNew)
 
@@ -193,6 +197,7 @@ function init_connection(device)
   elseif response_table.type == 'error' then
     log.error(string.format('Error reported in response: %s - %s', response_table.error, response_table.payload.errorText))
 '@
+    $errorOld = $errorOld.Replace("`r`n", "`n")
     $errorNew = @'
   elseif response_table.type == 'error' then
     local payload_error = ''
@@ -221,6 +226,7 @@ function init_connection(device)
       log.error(string.format('Error reported in response: %s - %s', tostring(response_table.error), payload_error))
     end
 '@
+    $errorNew = $errorNew.Replace("`r`n", "`n")
     if (-not $init.Contains($errorOld)) { throw 'init.lua: could not find error-handler patch location.' }
     $init = $init.Replace($errorOld, $errorNew)
 
@@ -297,7 +303,8 @@ function Discovery.run_discovery_task()
 '@
 
     $parserPattern = '(?s)local function parse_response\(val\).*?\nend\n\nfunction Discovery\.run_discovery_task\(\)'
-    $patchedDiscovery = [regex]::Replace($discovery, $parserPattern, $newParser.TrimEnd(), 1)
+    $replacement = [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $newParser.TrimEnd() }
+    $patchedDiscovery = [regex]::Replace($discovery, $parserPattern, $replacement, 1)
     if ($patchedDiscovery -eq $discovery) {
         throw 'discovery.lua: failed to replace the response parser.'
     }
