@@ -1,5 +1,5 @@
-name: 'LG webOS TV V2 - webOS26'
-packageKey: 'cmx.lgtv.webos26.v2'
+name: "LG webOS TV V2 - webOS26"
+packageKey: "seop.lgtv.webos26.v2"
 permissions:
-  lan: {}
-  discovery: {}
+    lan: {}
+    discovery: {}
