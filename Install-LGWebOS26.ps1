@@ -240,16 +240,6 @@ function init_connection(device)
     if (-not $init.Contains($errorOld)) { throw 'init.lua: could not find error-handler patch location.' }
     $init = $init.Replace($errorOld, $errorNew)
 
-    $appCacheOld = @'
-      local appname
-
-      for _, element in ipairs(device.state_cache.main.mediaPresets.presets.value) do
-        if element.id == value then
-          appname = element.name
-          break
-        end
-      end
-'@
     $appCacheNew = @'
       local appname
       local main_state = device.state_cache and device.state_cache.main
@@ -263,10 +253,12 @@ function init_connection(device)
         end
       end
 '@
-    $appCacheOld = $appCacheOld.Replace("`r`n", "`n")
     $appCacheNew = $appCacheNew.Replace("`r`n", "`n")
-    if (-not $init.Contains($appCacheOld)) { throw 'init.lua: could not find app cache patch location.' }
-    $init = $init.Replace($appCacheOld, $appCacheNew)
+      $appCachePattern = '(?s)      local appname\s+for _, element in ipairs\(device\.state_cache\.main\.mediaPresets\.presets\.value\) do\s+if element\.id == value then\s+appname = element\.name\s+break\s+end\s+end'
+      $appCacheReplacement = [System.Text.RegularExpressions.MatchEvaluator]{ param($match) $appCacheNew.TrimEnd() }
+      $patchedInit = [regex]::Replace($init, $appCachePattern, $appCacheReplacement, 1)
+      if ($patchedInit -eq $init) { throw 'init.lua: could not find app cache patch location.' }
+      $init = $patchedInit
 
     Write-Utf8NoBom $initPath $init
 
