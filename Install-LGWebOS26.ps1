@@ -229,6 +229,9 @@ function init_connection(device)
         fallback.payload['client-key'] = device:get_field('lg_registration_key')
       end
       send_command(device, cx.encode_json(fallback))
+    elseif string.find(normalized_error, 'no active broadcast', 1, true)
+       or string.find(normalized_error, 'utp/bind returns invalid result', 1, true) then
+      log.debug('No active broadcast channel; current channel is unavailable')
     else
       log.error(string.format('Error reported in response: %s - %s', tostring(response_table.error), payload_error))
     end
@@ -236,6 +239,34 @@ function init_connection(device)
     $errorNew = $errorNew.Replace("`r`n", "`n")
     if (-not $init.Contains($errorOld)) { throw 'init.lua: could not find error-handler patch location.' }
     $init = $init.Replace($errorOld, $errorNew)
+
+    $appCacheOld = @'
+      local appname
+      
+      for _, element in ipairs(device.state_cache.main.mediaPresets.presets.value) do
+        if element.id == value then
+          appname = element.name
+          break
+        end
+      end
+'@
+    $appCacheNew = @'
+      local appname
+      local main_state = device.state_cache and device.state_cache.main
+      local preset_state = main_state and main_state.mediaPresets and main_state.mediaPresets.presets
+      if preset_state and type(preset_state.value) == 'table' then
+        for _, element in ipairs(preset_state.value) do
+          if element.id == value then
+            appname = element.name
+            break
+          end
+        end
+      end
+'@
+    $appCacheOld = $appCacheOld.Replace("`r`n", "`n")
+    $appCacheNew = $appCacheNew.Replace("`r`n", "`n")
+    if (-not $init.Contains($appCacheOld)) { throw 'init.lua: could not find app cache patch location.' }
+    $init = $init.Replace($appCacheOld, $appCacheNew)
 
     Write-Utf8NoBom $initPath $init
 
