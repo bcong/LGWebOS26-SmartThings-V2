@@ -243,44 +243,45 @@ local function parse_response(device, payload)
     elseif (key == 'appId') or ((key == 'id') and (is_applist == false)) then
     
       local appname
-      
-      for _, element in ipairs(device.state_cache.main.mediaPresets.presets.value) do
-        if element.id == value then
-          appname = element.name
-          break
-        end
-      end
-      
-      if appname then
-    
-        log.debug ('App name:', appname)
-        
-        device:emit_event(cap_app.currentApp(appname))
-        
-        local inputsources = {
-                                { appid='com.webos.app.hdmi1', source='HDMI 1' },
-                                { appid='com.webos.app.hdmi2', source='HDMI 2' },
-                                { appid='com.webos.app.hdmi3', source='HDMI 3' },
-                                { appid='com.webos.app.hdmi4', source='HDMI 4' },
-                                { appid='com.webos.app.externalinput.av1', source='AV' },
-                                { appid='com.webos.app.externalinput.component', source='Component' },
-                                { appid='com.webos.app.livetv', source='LIVE TV' },
-                              }
-        local mediainputsource
-                              
-        for _, rec in ipairs(inputsources) do
-          if rec.appid == value then
-            mediainputsource = rec.source
+
+      local main_state = device.state_cache and device.state_cache.main
+      local preset_state = main_state and main_state.mediaPresets and main_state.mediaPresets.presets
+      if preset_state and type(preset_state.value) == 'table' then
+        for _, element in ipairs(preset_state.value) do
+          if element.id == value then
+            appname = element.name
             break
           end
         end
-        
-        if mediainputsource then
-          device:emit_event(cap_lginput.inputsource(mediainputsource))
+      end
+
+      local inputsources = {
+                              { appid='com.webos.app.hdmi1', source='HDMI 1' },
+                              { appid='com.webos.app.hdmi2', source='HDMI 2' },
+                              { appid='com.webos.app.hdmi3', source='HDMI 3' },
+                              { appid='com.webos.app.hdmi4', source='HDMI 4' },
+                              { appid='com.webos.app.externalinput.av1', source='AV' },
+                              { appid='com.webos.app.externalinput.component', source='Component' },
+                              { appid='com.webos.app.livetv', source='LIVE TV' },
+                            }
+      local mediainputsource
+
+      for _, rec in ipairs(inputsources) do
+        if rec.appid == value then
+          mediainputsource = rec.source
+          break
         end
-        
+      end
+      if appname then
+
+        log.debug ('App name:', appname)
+        device:emit_event(cap_app.currentApp(appname))
       else
-        log.warn ('App name not determined')
+        log.debug ('App name not determined:', value)
+      end
+
+      if mediainputsource then
+        device:emit_event(cap_lginput.inputsource(mediainputsource))
       end
     
     end
@@ -349,6 +350,9 @@ local function handle_response_frame(device, payload)
         fallback.payload['client-key'] = device:get_field('lg_registration_key')
       end
       send_command(device, cx.encode_json(fallback))
+    elseif string.find(normalized_error, 'no active broadcast', 1, true)
+       or string.find(normalized_error, 'utp/bind returns invalid result', 1, true) then
+      log.debug('No active broadcast channel; current channel is unavailable')
     else
       log.error(string.format('Error reported in response: %s - %s', tostring(response_table.error), payload_error))
     end

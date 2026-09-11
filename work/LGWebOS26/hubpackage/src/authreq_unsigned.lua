@@ -27,5 +27,6 @@ manifest.appVersion = "1.0"
 -- They must also be requested by the unsigned fallback.
 table.insert(manifest.permissions, "CONTROL_INPUT_TEXT")
 table.insert(manifest.permissions, "CONTROL_MOUSE_AND_KEYBOARD")
+table.insert(manifest.permissions, "READ_INSTALLED_APPS")
 
 return request
