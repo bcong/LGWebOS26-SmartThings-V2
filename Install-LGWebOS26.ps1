@@ -242,7 +242,7 @@ function init_connection(device)
 
     $appCacheOld = @'
       local appname
-      
+
       for _, element in ipairs(device.state_cache.main.mediaPresets.presets.value) do
         if element.id == value then
           appname = element.name
