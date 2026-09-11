@@ -1,0 +1,13 @@
+Upstream driver:
+https://github.com/toddaustin07/LGTV
+
+webOS 26 compatibility reference:
+https://github.com/hobbyquaker/lgtv2
+- 2.0.1: unsigned pairing fallback on 403 blacklisted certificate
+- 2.0.2: CONTROL_INPUT_TEXT and CONTROL_MOUSE_AND_KEYBOARD in fallback manifest
+
+SmartThings CLI:
+https://github.com/SmartThingsCommunity/smartthings-cli
+
+SmartThings Edge documentation:
+https://developer.smartthings.com/docs/devices/hub-connected/driver-channels
