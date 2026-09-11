@@ -933,4 +933,8 @@ thisDriver:call_on_schedule(120, pingmonitor)
 
 disco_sem = semaphore()
 
+thisDriver:call_with_delay(5, function()
+  discovery_handler(thisDriver, nil, function() return true end)
+end)
+
 thisDriver:run()

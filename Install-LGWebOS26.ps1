@@ -311,6 +311,25 @@ function Discovery.run_discovery_task()
     Write-Utf8NoBom $discoveryPath $patchedDiscovery
 
     $init = $init.Replace('string.format("Discovered already known device %s", id)', 'string.format("Discovered already known device %s", uuid)')
+
+    $startupDiscovery = @'
+  disco_sem = semaphore()
+
+  thisDriver:run()
+  '@
+    $startupDiscoveryPatch = @'
+  disco_sem = semaphore()
+
+  thisDriver:call_with_delay(5, function()
+    discovery_handler(thisDriver, nil, function() return true end)
+  end)
+
+  thisDriver:run()
+  '@
+    $startupDiscovery = $startupDiscovery.Replace("`r`n", "`n")
+    $startupDiscoveryPatch = $startupDiscoveryPatch.Replace("`r`n", "`n")
+    if (-not $init.Contains($startupDiscovery)) { throw 'init.lua: could not find startup discovery patch location.' }
+    $init = $init.Replace($startupDiscovery, $startupDiscoveryPatch)
     Write-Utf8NoBom $initPath $init
 
     $notes = @'
