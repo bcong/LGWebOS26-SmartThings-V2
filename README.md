@@ -25,9 +25,22 @@ CLI 채널은 초대받은 사용자에게만 공유됩니다. SmartThings 기�
 - Channel: `LG webOS 26 Compatibility`
 - Driver ID: `63c66b59-1c9a-4d63-9b4b-766c9406385c`
 - Package key: `seop.lgtv.webos26.v2`
+- Latest deployed version: `2026-09-16T10:47:23.344317838`
 - 초대 URL: [SmartThings 채널 초대 링크](https://bestow-regional.api.smartthings.com/invite/3X21QoBZ8O2R)
 
 위 초대 URL을 열고 채널 초대를 수락한 다음 SmartThings 앱에서 공유 채널의 드라이버를 Hub에 설치합니다.
+
+### Edge Driver 설치 위치
+
+이 프로젝트는 VS Code 확장이 아니라 SmartThings Hub용 Edge Driver입니다. 다음 순서로 설치합니다.
+
+1. [SmartThings 채널 초대 링크](https://bestow-regional.api.smartthings.com/invite/3X21QoBZ8O2R)를 엽니다.
+2. 사용하는 Samsung 계정으로 로그인하고 사용할 Hub에서 `Enroll`을 선택합니다.
+3. `Available Drivers`를 열고 `LG webOS TV V2 - webOS26`을 선택합니다.
+4. `Install`을 누릅니다.
+5. SmartThings 앱에서 기기 추가 → 주변 기기 검색을 실행합니다.
+
+공식 안내: [Enroll in a Shared Channel and Install Drivers](https://developer.smartthings.com/docs/devices/hub-connected/enroll-in-a-shared-channel)
 
 ## SmartThings CLI 사용법
 
@@ -37,6 +50,20 @@ Windows용 공식 SmartThings CLI를 설치합니다.
 
 - [SmartThings CLI releases](https://github.com/SmartThingsCommunity/smartthings-cli/releases)
 - [SmartThings CLI documentation](https://developer.smartthings.com/docs/sdks/cli)
+
+Windows에서는 Releases 페이지의 `smartthings.msi`를 내려받아 설치합니다. 설치 후 PowerShell에서 다음으로 확인합니다.
+
+```powershell
+smartthings --version
+```
+
+CLI 사용자 설정 파일은 다음 위치에 있습니다.
+
+```text
+%LOCALAPPDATA%\@smartthings\cli\config.yaml
+```
+
+PAT는 저장소에 넣지 말고 이 설정 파일의 `default.token`으로 관리합니다.
 
 PowerShell에서 로그인과 계정을 확인합니다.
 
@@ -62,7 +89,7 @@ smartthings edge:channels:create
 저장소 루트에서 실행합니다.
 
 ```powershell
-smartthings edge:drivers:package .\work\LGWebOS26\hubpackage
+smartthings edge:drivers:package .\work\LGWebOS26\hubpackage --channel 0b04b476-b7c8-48be-92a5-97922a0441e1
 ```
 
 이 명령은 Edge Driver 패키지를 빌드하고 계정에 새 드라이버 버전을 업로드합니다. 기존 LG TV V1.1을 덮어쓰지 않도록 별도의 `packageKey`를 사용합니다.
@@ -112,6 +139,8 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 - 여러 TV를 동시에 사용하는 경우 registration handshake 데이터를 TV별로 복제
 - SSDP 검색을 기존 단일 MediaRenderer 검색에서 `ssdp:all` 검색으로 확장
 - 예전 `DLNADEVICENAME` 형식뿐 아니라 LG/webOS service, server, name marker 인식
+- 60초 간격 WebSocket heartbeat와 PONG 확인으로 장시간 유휴 연결 감시
+- WebSocket CLOSE/error/timeout을 동일한 재연결 경로로 처리하고 중복 재연결 타이머 방지
 
 ## TV 연결
 

@@ -381,6 +381,38 @@ local function handshake_lgtv(device)
 end
 
 
+local RECONNECT_DELAY = 15
+local PING_TIMEOUT = 180
+
+local function clear_connection(device, sock, close_socket)
+
+  if sock then
+    thisDriver:unregister_channel_handler(sock)
+    if close_socket then
+      sock:close()
+    end
+  end
+
+  device:set_field('ws_client', nil)
+  device:set_field('ws_sock', nil)
+
+end
+
+local function schedule_reconnect(device)
+
+  if device:get_field('retrytimer') then
+    return
+  end
+
+  local retrytimer = thisDriver:call_with_delay(RECONNECT_DELAY, function()
+    device:set_field('retrytimer', nil)
+    init_connection(device)
+  end)
+  device:set_field('retrytimer', retrytimer)
+
+end
+
+
 local function pingmonitor()
 
   log.debug('Checking last pings...')
@@ -389,21 +421,35 @@ local function pingmonitor()
   
   for _, device in ipairs(devicelist) do
   
-    if device:get_field('ws_client') then
+    local client = device:get_field('ws_client')
+    if client then
+
+      local now = socket.gettime()
+      local lastping = device:get_field('lastping') or now
+      device:set_field('lastping', lastping)
+      local time_since_last_ping = now - lastping
     
-      local time_since_last_ping = socket.gettime() - device:get_field('lastping')
-    
-      if (time_since_last_ping) > 60 then
+      if time_since_last_ping > PING_TIMEOUT then
       
         log.warn(string.format('%s has not pinged in %s seconds', device.label, time_since_last_ping))
         
         device:offline()
-        device:set_field('ws_client', nil)
         local sock = device:get_field('ws_sock')
-        device:set_field('ws_sock', nil)
-        thisDriver:unregister_channel_handler(sock)
-        
-        device.thread:queue_event(init_connection, device)
+        clear_connection(device, sock, true)
+        device:emit_event(cap_status.status('Connect retry...'))
+        schedule_reconnect(device)
+
+      else
+
+        local ping_ok = client:send('', PING_FRAME)
+        if not ping_ok then
+          log.warn(string.format('%s heartbeat send failed', device.label))
+          device:offline()
+          local sock = device:get_field('ws_sock')
+          clear_connection(device, sock, false)
+          device:emit_event(cap_status.status('Connect retry...'))
+          schedule_reconnect(device)
+        end
         
       end
     end
@@ -444,11 +490,7 @@ function init_connection(device)
     log.error ('Could not connect:', code)
     log.info(string.format('%s: WS Connect will retry in 15 seconds', device.label))
     device:emit_event(cap_status.status('Connect retry (' .. wssaddr .. ')'))
-    --device:offline()
-    local retrytimer = thisDriver:call_with_delay(15, function()
-        init_connection(device)
-      end)
-    device:set_field('retrytimer', retrytimer)
+    schedule_reconnect(device)
     return
   end
   
@@ -459,11 +501,16 @@ function init_connection(device)
   device:set_field('retrytimer', nil)
   device:set_field('ws_client', client)
   device:set_field('ws_sock', sock)
+  device:set_field('lastping', socket.gettime())
 
   thisDriver:register_channel_handler(sock, function ()
       local payload, opcode, c, d, err = client:receive()
       
       log.debug (string.format('Received opcode=%s, c=%s, d=%s, err=%s', opcode, c, d, err))
+
+      if opcode then
+        device:set_field('lastping', socket.gettime())
+      end
       
       if opcode ~= PING_FRAME then
         
@@ -475,9 +522,11 @@ function init_connection(device)
         elseif opcode == CONNECTED_CLOSE_FRAME then
           log.warn ('Connection has been closed by request')
           device:emit_event(cap_status.status('Connection closed'))
-          thisDriver:unregister_channel_handler(sock)
-          sock:close()
+          clear_connection(device, sock, true)
+          device:offline()
           device:emit_event(capabilities.switch.switch('off'))
+          device:emit_event(cap_status.status('Connect retry...'))
+          schedule_reconnect(device)
           return
         end
         
@@ -496,15 +545,10 @@ function init_connection(device)
           device:offline()
         end
         
-        device:set_field('ws_client', nil)
-        device:set_field('ws_sock', nil)
-        thisDriver:unregister_channel_handler(sock)
+        clear_connection(device, sock, false)
         device:emit_event(cap_status.status('Connect retry...'))
         log.info(string.format('%s: WS Re-Connect attempt in 15 seconds', device.label))
-        local retrytimer = thisDriver:call_with_delay(15, function()
-            init_connection(device)
-          end)
-        device:set_field('retrytimer', retrytimer)
+        schedule_reconnect(device)
         return
         
       end
@@ -519,6 +563,7 @@ local function shutdown_device(driver, device, msg)
 
   if device:get_field('retrytimer') then
     thisDriver:cancel_timer(device:get_field('retrytimer'))
+    device:set_field('retrytimer', nil)
   end
   
   if device:get_field('refresh_timer') then
@@ -533,6 +578,7 @@ local function shutdown_device(driver, device, msg)
   
   device:set_field('ws_client', nil)
   device:set_field('ws_sock', nil)
+  device:set_field('lastping', nil)
 
 end
 
@@ -563,6 +609,7 @@ local function handle_refresh(driver, device, command)
     if not device:get_field('ws_client') then
       if device:get_field('retrytimer') then
         driver:cancel_timer(device:get_field('retrytimer'))
+        device:set_field('retrytimer', nil)
       end
       
       device.thread:queue_event(init_connection, device)
@@ -933,7 +980,7 @@ thisDriver = Driver("thisDriver", {
 log.info ('LG TV Driver V1.1 Started')
 
 -- start ping monitor
-thisDriver:call_on_schedule(120, pingmonitor)
+thisDriver:call_on_schedule(60, pingmonitor)
 
 disco_sem = semaphore()
 
