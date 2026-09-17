@@ -168,19 +168,11 @@ local function update_device(device)
 
   send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/getPowerState"))
   
-  socket.sleep(.5)
-  
   send_command(device, build_messsage("request", "ssap://com.webos.service.apiadapter/audio/getSoundOutput"))
-  
-  socket.sleep(.5)
   
   send_command(device, build_messsage("request", "ssap://audio/getStatus"))
   
-  socket.sleep(.5)
-  
   send_command(device, build_messsage("request", "ssap://tv/getCurrentChannel"))
-  
-  socket.sleep(.5)
   
   send_command(device, build_messsage("request", "ssap://com.webos.applicationManager/getForegroundAppInfo"))
 
@@ -202,8 +194,6 @@ end
 local function init_device(device)
 
   update_device(device)
-  
-  socket.sleep(.5)
   
   send_command(device, build_messsage("request", "ssap://com.webos.applicationManager/listApps"))
   
