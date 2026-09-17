@@ -102,6 +102,9 @@ DEVICE_PROFILE = 'lgtv.v2d'
 
 ------------------------------------------------------------------------
 
+local clear_connection
+local schedule_reconnect
+
 
 function send_command(device, msgdata)
   
@@ -113,12 +116,18 @@ function send_command(device, msgdata)
     if not ok then
       log.error ('Websocket Send failed:')
       log.error (close_was_clean, close_code, close_reason)
+      local sock = device:get_field('ws_sock')
+      clear_connection(device, sock, true)
+      device:offline()
+      device:emit_event(cap_status.status('Connect retry...'))
+      schedule_reconnect(device)
     else
       log.info ('Message sent')
     end
 
   else
     log.warn ('Cannot send message; not connected', msgdata)
+    schedule_reconnect(device)
   end
 
 end
@@ -384,7 +393,7 @@ end
 local RECONNECT_DELAY = 15
 local PING_TIMEOUT = 180
 
-local function clear_connection(device, sock, close_socket)
+clear_connection = function(device, sock, close_socket)
 
   if sock then
     thisDriver:unregister_channel_handler(sock)
@@ -398,7 +407,7 @@ local function clear_connection(device, sock, close_socket)
 
 end
 
-local function schedule_reconnect(device)
+schedule_reconnect = function(device)
 
   if device:get_field('retrytimer') then
     return
@@ -883,7 +892,7 @@ local function discovery_handler(driver, _, should_continue)
 
   local device_list = driver:get_devices()
   for _, device in ipairs(device_list) do
-    known_devices[device.device_network_id] = true
+    known_devices[device.device_network_id] = device
   end
   
   local retries = 5
@@ -892,7 +901,8 @@ local function discovery_handler(driver, _, should_continue)
     discovery.find(nil, function(lgdevice)
       local uuid = lgdevice.uuid
       local ip = lgdevice.ip
-      if not known_devices[uuid] and not found_devices[uuid] then
+      local known_device = known_devices[uuid]
+      if not known_device and not found_devices[uuid] then
       
         local profile = DEVICE_PROFILE
 
@@ -911,6 +921,18 @@ local function discovery_handler(driver, _, should_continue)
         assert(driver:try_create_device(create_device_msg))
         found_devices[uuid] = true
         newly_added[uuid] = lgdevice
+      elseif known_device then
+        local new_wssaddr = ip .. ':' .. WSSPORT
+        local old_wssaddr = known_device:get_field('WSSaddr')
+        if old_wssaddr ~= new_wssaddr then
+          log.warn(string.format('%s address changed from %s to %s', known_device.label, tostring(old_wssaddr), new_wssaddr))
+          known_device:set_field('WSSaddr', new_wssaddr, { ['persist'] = true })
+          local sock = known_device:get_field('ws_sock')
+          clear_connection(known_device, sock, true)
+          known_device:offline()
+          known_device:emit_event(cap_status.status('Address updated; reconnecting'))
+          schedule_reconnect(known_device)
+        end
       else
         log.info(string.format("Discovered already known device %s", uuid))
       end
@@ -985,6 +1007,10 @@ thisDriver:call_on_schedule(60, pingmonitor)
 disco_sem = semaphore()
 
 thisDriver:call_with_delay(5, function()
+  discovery_handler(thisDriver, nil, function() return true end)
+end)
+
+thisDriver:call_on_schedule(300, function()
   discovery_handler(thisDriver, nil, function() return true end)
 end)
 

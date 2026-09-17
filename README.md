@@ -25,7 +25,7 @@ CLI 채널은 초대받은 사용자에게만 공유됩니다. SmartThings 기�
 - Channel: `LG webOS 26 Compatibility`
 - Driver ID: `63c66b59-1c9a-4d63-9b4b-766c9406385c`
 - Package key: `seop.lgtv.webos26.v2`
-- Latest deployed version: `2026-09-16T10:47:23.344317838`
+- Latest deployed version: `2026-09-17T09:58:33.819926428`
 - 초대 URL: [SmartThings 채널 초대 링크](https://bestow-regional.api.smartthings.com/invite/3X21QoBZ8O2R)
 
 위 초대 URL을 열고 채널 초대를 수락한 다음 SmartThings 앱에서 공유 채널의 드라이버를 Hub에 설치합니다.
@@ -94,6 +94,16 @@ smartthings edge:drivers:package .\work\LGWebOS26\hubpackage --channel 0b04b476-
 
 이 명령은 Edge Driver 패키지를 빌드하고 계정에 새 드라이버 버전을 업로드합니다. 기존 LG TV V1.1을 덮어쓰지 않도록 별도의 `packageKey`를 사용합니다.
 
+업로드와 동시에 Hub의 설치 버전까지 교체하려면 PAT에 `w:devices:*` 권한을 포함하고 다음을 실행합니다.
+
+```powershell
+$env:SMARTTHINGS_PROFILE = "oauth"
+smartthings edge:drivers:package .\work\LGWebOS26\hubpackage --channel 0b04b476-b7c8-48be-92a5-97922a0441e1 --install --hub 00f21b64-3565-453d-bb39-23d4decbd678
+Remove-Item Env:SMARTTHINGS_PROFILE
+```
+
+이 `oauth` 프로필은 SmartThings CLI 로그인으로 저장된 인증을 사용합니다. PAT를 사용할 경우에는 `w:devices:*` 권한이 필요합니다.
+
 ### 4. 채널에 드라이버 배정
 
 CLI 질문에 따라 드라이버와 버전을 선택할 수 있습니다.
@@ -141,6 +151,7 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 - 예전 `DLNADEVICENAME` 형식뿐 아니라 LG/webOS service, server, name marker 인식
 - 60초 간격 WebSocket heartbeat와 PONG 확인으로 장시간 유휴 연결 감시
 - WebSocket CLOSE/error/timeout을 동일한 재연결 경로로 처리하고 중복 재연결 타이머 방지
+- 명령 전송 실패 시 즉시 재연결하고, DHCP/IP 변경을 주기적으로 감지해 주소 갱신
 
 ## TV 연결
 
