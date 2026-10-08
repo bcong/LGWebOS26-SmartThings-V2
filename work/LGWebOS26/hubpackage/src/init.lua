@@ -381,6 +381,7 @@ end
 
 
 local RECONNECT_DELAY = 15
+local WAKE_RECONNECT_DELAY = 5
 local PING_TIMEOUT = 180
 
 clear_connection = function(device, sock, close_socket)
@@ -397,13 +398,13 @@ clear_connection = function(device, sock, close_socket)
 
 end
 
-schedule_reconnect = function(device)
+schedule_reconnect = function(device, delay)
 
   if device:get_field('retrytimer') then
     return
   end
 
-  local retrytimer = thisDriver:call_with_delay(RECONNECT_DELAY, function()
+  local retrytimer = thisDriver:call_with_delay(delay or RECONNECT_DELAY, function()
     device:set_field('retrytimer', nil)
     init_connection(device)
   end)
@@ -631,7 +632,21 @@ local function handle_switch(driver, device, command)
   device:emit_event(capabilities.switch.switch(command.command))
   
   if command.command == 'on' then
-     wol.do_wakeonlan(device.preferences.macaddr, device.preferences.bcastaddr)
+    local wake_sent = wol.do_wakeonlan(device.preferences.macaddr, device.preferences.bcastaddr)
+    if wake_sent then
+      local sock = device:get_field('ws_sock')
+      clear_connection(device, sock, true)
+      device:offline()
+    end
+
+    if not device:get_field('ws_client') then
+      local retrytimer = device:get_field('retrytimer')
+      if retrytimer then
+        driver:cancel_timer(retrytimer)
+        device:set_field('retrytimer', nil)
+      end
+      schedule_reconnect(device, WAKE_RECONNECT_DELAY)
+    end
   else
     send_command(device, build_messsage("request", "ssap://system/turnOff"))
   end

@@ -19,82 +19,86 @@
 --]]
 
 -- Edge libraries
-local cosock = require "cosock"                   -- cosock used only for sleep timer in this module
-local socket = require "cosock.socket"
-local log = require "log"
+local cosock = require("cosock") -- cosock used only for sleep timer in this module
+local socket = require("cosock.socket")
+local log = require("log")
 
-
-local BROADCAST_ADDR = '255.255.255.255'
+local BROADCAST_ADDR = "255.255.255.255"
 local BROADCAST_PORT = 0
 
 return {
-  do_wakeonlan = function(macaddr, broadcastaddr)
+	do_wakeonlan = function(macaddr, broadcastaddr)
+		-- Validate IP:port address
 
-    -- Validate IP:port address
-    
-    local broadcast_ip_chunks = {broadcastaddr:match("^(%d+).(%d+).(%d+).(%d+)%:.")}
-    local broadcast_ip = broadcastaddr:match("^(.+):")
+		if type(broadcastaddr) ~= "string" then
+			log.error("Invalid Broadcast IP address:", broadcastaddr)
+			return false
+		end
 
-    if #broadcast_ip_chunks ~= 4 then
-      log.error ('Invalid Broadcast IP address:', broadcast_ip)
-      return
-    end
+		local broadcast_ip_chunks = { broadcastaddr:match("^(%d+)%.(%d+)%.(%d+)%.(%d+):%d+$") }
+		local broadcast_ip = broadcastaddr:match("^(.+):")
 
-    for _, item in pairs(broadcast_ip_chunks) do
-      if tonumber(item) > 255 then
-        log.error ('Invalid Broadcast IP address:', broadcast_ip)
-        return
-      end
-    end
+		if #broadcast_ip_chunks ~= 4 then
+			log.error("Invalid Broadcast IP address:", broadcast_ip)
+			return
+		end
 
-    local broadcast_port = tonumber(broadcastaddr:match(":(%d+)$"))
-    if not broadcast_port then
-      log.error ('Invalid Broadcast port number:', broadcast_port)
-      return
-    end
-    
-    -- Validate MAC address
+		for _, item in pairs(broadcast_ip_chunks) do
+			if tonumber(item) > 255 then
+				log.error("Invalid Broadcast IP address:", broadcast_ip)
+				return
+			end
+		end
 
-    if string.len(macaddr) == 17 then
+		local broadcast_port = tonumber(broadcastaddr:match(":(%d+)$"))
+		if not broadcast_port then
+			log.error("Invalid Broadcast port number:", broadcast_port)
+			return
+		end
 
-      local chunks = {macaddr:match("^(%x%x)-(%x%x)-(%x%x)-(%x%x)-(%x%x)-(%x%x)$")}
-      
-      if #chunks == 0 then
-        chunks = {macaddr:match("^(%x%x):(%x%x):(%x%x):(%x%x):(%x%x):(%x%x)$")}
-      end
-    
-      if #chunks == 6 then
-    
-        -- Build magic package
-        
-        local macbytes = ''
-        
-        for _, byte in ipairs(chunks) do
-          macbytes = macbytes .. string.char(tonumber('0x' .. byte))
-        end
+		-- Validate MAC address
 
-        local magic_packet = ''
-        
-        magic_packet = string.rep(string.char(0xff),6)
-        magic_packet = magic_packet .. string.rep(macbytes, 16)
+		if type(macaddr) == "string" and string.len(macaddr) == 17 then
+			local chunks = { macaddr:match("^(%x%x)-(%x%x)-(%x%x)-(%x%x)-(%x%x)-(%x%x)$") }
 
-        -- Broadcast magic packet
+			if #chunks == 0 then
+				chunks = { macaddr:match("^(%x%x):(%x%x):(%x%x):(%x%x):(%x%x):(%x%x)$") }
+			end
 
-        local sock = assert(socket.udp(), "WOL socket")
-        sock:setoption('broadcast', true)
-        
-        log.info (string.format("Sending WOL magic packet for MAC address %s to %s", macaddr, broadcastaddr))
-        sock:sendto(magic_packet, broadcast_ip, broadcast_port)
-        sock:close()
-        
-        return
+			if #chunks == 6 then
+				-- Build magic package
 
-      end
-      
-    end
-    
-    log.error ('Invalid MAC Address')
+				local macbytes = ""
 
-  end
+				for _, byte in ipairs(chunks) do
+					macbytes = macbytes .. string.char(assert(tonumber("0x" .. byte)))
+				end
 
+				local magic_packet = ""
+
+				magic_packet = string.rep(string.char(0xff), 6)
+				magic_packet = magic_packet .. string.rep(macbytes, 16)
+
+				-- Broadcast magic packet
+
+				local sock = assert(socket.udp(), "WOL socket")
+				sock:setoption("broadcast", true)
+
+				log.info(string.format("Sending 3 WOL magic packets for MAC address %s to %s", macaddr, broadcastaddr))
+				for packet_number = 1, 3 do
+					local sent, err = sock:sendto(magic_packet, broadcast_ip, broadcast_port)
+					if not sent then
+						log.error("Failed to send WOL magic packet:", err)
+						sock:close()
+						return false
+					end
+				end
+				sock:close()
+
+				return true
+			end
+		end
+
+		log.error("Invalid MAC Address")
+	end,
 }

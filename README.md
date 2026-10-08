@@ -151,6 +151,7 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 - 예전 `DLNADEVICENAME` 형식뿐 아니라 LG/webOS service, server, name marker 인식
 - 60초 간격 WebSocket heartbeat와 PONG 확인으로 장시간 유휴 연결 감시
 - WebSocket CLOSE/error/timeout을 동일한 재연결 경로로 처리하고 중복 재연결 타이머 방지
+- 전원 켜기 시 WOL 패킷 3회 전송, 5초 후 재연결 시도 및 실패 시 재시도
 - 명령 전송 실패 시 즉시 재연결하고, DHCP/IP 변경을 주기적으로 감지해 주소 갱신
 
 ## TV 연결
@@ -158,8 +159,10 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 1. TV를 켜고 Hub와 같은 네트워크에 연결합니다.
 2. SmartThings 앱에서 기기 추가 후 주변 기기 검색을 실행합니다.
 3. TV에 표시되는 연결 승인 요청을 허용합니다.
-4. 전원 켜기 기능을 사용하려면 기기 설정의 `WOL MAC Address`에 TV의 MAC 주소를 입력합니다.
-5. TV에서 네트워크를 통한 전원 켜기 또는 Wake on LAN 관련 설정을 활성화합니다.
+4. 전원 켜기 기능을 사용하려면 `WOL MAC Address`에 TV의 MAC 주소를, `WOL Broadcast Address`에 네트워크 브로드캐스트 주소와 포트를 입력합니다.
+5. TV 설정에서 `TV On With Mobile` 또는 Wi-Fi를 통한 전원 켜기를 활성화합니다.
+
+TV가 대기 중 네트워크를 끄면 WebSocket heartbeat만으로 연결을 유지할 수 없습니다. 이때 드라이버는 WOL 패킷을 보내고 WebSocket 재접속을 시도하므로, TV의 네트워크 대기/원격 전원 켜기가 활성화되어 있어야 합니다.
 
 설치된 드라이버의 로그는 다음 명령으로 확인할 수 있습니다.
 
