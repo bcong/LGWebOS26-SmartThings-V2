@@ -149,9 +149,9 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 - 여러 TV를 동시에 사용하는 경우 registration handshake 데이터를 TV별로 복제
 - SSDP 검색을 기존 단일 MediaRenderer 검색에서 `ssdp:all` 검색으로 확장
 - 예전 `DLNADEVICENAME` 형식뿐 아니라 LG/webOS service, server, name marker 인식
-- 60초 간격 WebSocket heartbeat와 PONG 확인으로 장시간 유휴 연결 감시
-- WebSocket CLOSE/error/timeout을 동일한 재연결 경로로 처리하고 중복 재연결 타이머 방지
-- 전원 켜기 시 WOL 패킷 3회 전송, 5초 후 재연결 시도 및 실패 시 재시도
+- 10초 간격 WebSocket heartbeat와 30초 PONG timeout으로 유휴 연결 감시
+- WebSocket CLOSE/error/timeout을 동일한 재연결 경로로 처리하고 중복 재연결 타이머 방지; 연결 실패 시 5초 간격 재시도
+- 전원 켜기 시 WOL 패킷 3회 전송, 최대 2분간 15초마다 재전송하고 WebSocket은 5초 간격으로 재접속
 - 명령 전송 실패 시 즉시 재연결하고, DHCP/IP 변경을 주기적으로 감지해 주소 갱신
 
 ## TV 연결

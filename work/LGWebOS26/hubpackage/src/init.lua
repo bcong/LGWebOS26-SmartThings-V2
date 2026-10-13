@@ -380,9 +380,11 @@ local function handshake_lgtv(device)
 end
 
 
-local RECONNECT_DELAY = 15
-local WAKE_RECONNECT_DELAY = 5
-local PING_TIMEOUT = 180
+local RECONNECT_DELAY = 5
+local PING_INTERVAL = 10
+local PING_TIMEOUT = 30
+local WAKE_RETRY_WINDOW = 120
+local WOL_RETRY_INTERVAL = 15
 
 clear_connection = function(device, sock, close_socket)
 
@@ -398,14 +400,27 @@ clear_connection = function(device, sock, close_socket)
 
 end
 
-schedule_reconnect = function(device, delay)
+schedule_reconnect = function(device)
 
   if device:get_field('retrytimer') then
     return
   end
 
-  local retrytimer = thisDriver:call_with_delay(delay or RECONNECT_DELAY, function()
+  local retrytimer = thisDriver:call_with_delay(RECONNECT_DELAY, function()
     device:set_field('retrytimer', nil)
+
+    local wake_retry_until = device:get_field('wake_retry_until')
+    if wake_retry_until then
+      local now = socket.gettime()
+      if now >= wake_retry_until then
+        device:set_field('wake_retry_until', nil)
+        device:set_field('last_wol_at', nil)
+      elseif now - (device:get_field('last_wol_at') or 0) >= WOL_RETRY_INTERVAL then
+        device:set_field('last_wol_at', now)
+        wol.do_wakeonlan(device.preferences.macaddr, device.preferences.bcastaddr)
+      end
+    end
+
     init_connection(device)
   end)
   device:set_field('retrytimer', retrytimer)
@@ -467,7 +482,9 @@ function init_connection(device)
   local wssaddr = device:get_field('WSSaddr')
   log.debug ('Retrieved device address:', wssaddr)
 
-  device:emit_event(capabilities.switch.switch('off'))
+  if not device:get_field('wake_retry_until') then
+    device:emit_event(capabilities.switch.switch('off'))
+  end
 
   local uri = 'wss://' .. wssaddr
   --local uri = 'ws://' .. wssaddr
@@ -488,7 +505,7 @@ function init_connection(device)
   
   if not ok then
     log.error ('Could not connect:', code)
-    log.info(string.format('%s: WS Connect will retry in 15 seconds', device.label))
+    log.info(string.format('%s: WS Connect will retry in %s seconds', device.label, RECONNECT_DELAY))
     device:emit_event(cap_status.status('Connect retry (' .. wssaddr .. ')'))
     schedule_reconnect(device)
     return
@@ -499,6 +516,8 @@ function init_connection(device)
   device:emit_event(cap_status.status('Connected'))
   
   device:set_field('retrytimer', nil)
+  device:set_field('wake_retry_until', nil)
+  device:set_field('last_wol_at', nil)
   device:set_field('ws_client', client)
   device:set_field('ws_sock', sock)
   device:set_field('lastping', socket.gettime())
@@ -634,6 +653,9 @@ local function handle_switch(driver, device, command)
   if command.command == 'on' then
     local wake_sent = wol.do_wakeonlan(device.preferences.macaddr, device.preferences.bcastaddr)
     if wake_sent then
+      local now = socket.gettime()
+      device:set_field('wake_retry_until', now + WAKE_RETRY_WINDOW)
+      device:set_field('last_wol_at', now)
       local sock = device:get_field('ws_sock')
       clear_connection(device, sock, true)
       device:offline()
@@ -645,9 +667,11 @@ local function handle_switch(driver, device, command)
         driver:cancel_timer(retrytimer)
         device:set_field('retrytimer', nil)
       end
-      schedule_reconnect(device, WAKE_RECONNECT_DELAY)
+      schedule_reconnect(device)
     end
   else
+    device:set_field('wake_retry_until', nil)
+    device:set_field('last_wol_at', nil)
     send_command(device, build_messsage("request", "ssap://system/turnOff"))
   end
   
@@ -1007,7 +1031,7 @@ thisDriver = Driver("thisDriver", {
 log.info ('LG TV Driver V1.1 Started')
 
 -- start ping monitor
-thisDriver:call_on_schedule(60, pingmonitor)
+thisDriver:call_on_schedule(PING_INTERVAL, pingmonitor)
 
 disco_sem = semaphore()
 
