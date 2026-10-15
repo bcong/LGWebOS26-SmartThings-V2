@@ -121,13 +121,16 @@ function send_command(device, msgdata)
       device:offline()
       device:emit_event(cap_status.status('Connect retry...'))
       schedule_reconnect(device)
+      return false
     else
       log.info ('Message sent')
+      return true
     end
 
   else
     log.warn ('Cannot send message; not connected', msgdata)
     schedule_reconnect(device)
+    return false
   end
 
 end
@@ -196,6 +199,14 @@ local function init_device(device)
   update_device(device)
   
   send_command(device, build_messsage("request", "ssap://com.webos.applicationManager/listApps"))
+
+  if device:get_field('screen_on_requested') then
+    if send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/turnOnScreen")) then
+      device:set_field('screen_on_requested', nil)
+      device:set_field('screen_off_mode', false, { ['persist'] = true })
+      device:emit_event(capabilities.switch.switch('on'))
+    end
+  end
   
   
   reset_refresh_timer(device)
@@ -211,7 +222,8 @@ local function parse_response(device, payload)
   for key, value in pairs(payload) do
   
     if key == 'state' then
-      if (value == 'Suspend') or (value == 'Request Suspend') then
+      if device:get_field('screen_off_mode')
+        or (value == 'Suspend') or (value == 'Request Suspend') then
         device:emit_event(capabilities.switch.switch('off'))
       else
         device:emit_event(capabilities.switch.switch('on'))
@@ -461,7 +473,7 @@ local function pingmonitor()
           log.warn(string.format('%s heartbeat send failed', device.label))
           device:offline()
           local sock = device:get_field('ws_sock')
-          clear_connection(device, sock, false)
+          clear_connection(device, sock, true)
           device:emit_event(cap_status.status('Connect retry...'))
           schedule_reconnect(device)
         end
@@ -481,10 +493,6 @@ function init_connection(device)
   end
   local wssaddr = device:get_field('WSSaddr')
   log.debug ('Retrieved device address:', wssaddr)
-
-  if not device:get_field('wake_retry_until') then
-    device:emit_event(capabilities.switch.switch('off'))
-  end
 
   local uri = 'wss://' .. wssaddr
   --local uri = 'ws://' .. wssaddr
@@ -543,7 +551,6 @@ function init_connection(device)
           device:emit_event(cap_status.status('Connection closed'))
           clear_connection(device, sock, true)
           device:offline()
-          device:emit_event(capabilities.switch.switch('off'))
           device:emit_event(cap_status.status('Connect retry...'))
           schedule_reconnect(device)
           return
@@ -558,7 +565,6 @@ function init_connection(device)
       
         if err == 'closed' then
           log.warn ('Connection has been closed')
-          device:emit_event(capabilities.switch.switch('off'))
         else
           log.error ('Receive error:', err)
           device:offline()
@@ -566,7 +572,7 @@ function init_connection(device)
         
         clear_connection(device, sock, false)
         device:emit_event(cap_status.status('Connect retry...'))
-        log.info(string.format('%s: WS Re-Connect attempt in 15 seconds', device.label))
+        log.info(string.format('%s: WS Re-Connect attempt in %s seconds', device.label, RECONNECT_DELAY))
         schedule_reconnect(device)
         return
         
@@ -651,28 +657,59 @@ local function handle_switch(driver, device, command)
   device:emit_event(capabilities.switch.switch(command.command))
   
   if command.command == 'on' then
-    local wake_sent = wol.do_wakeonlan(device.preferences.macaddr, device.preferences.bcastaddr)
-    if wake_sent then
-      local now = socket.gettime()
-      device:set_field('wake_retry_until', now + WAKE_RETRY_WINDOW)
-      device:set_field('last_wol_at', now)
-      local sock = device:get_field('ws_sock')
-      clear_connection(device, sock, true)
-      device:offline()
+    local connected = device:get_field('ws_client') ~= nil
+
+    if connected and device:get_field('screen_off_mode') then
+      connected = send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/turnOnScreen"))
+      if connected then
+        device:set_field('screen_off_mode', false, { ['persist'] = true })
+      end
     end
 
-    if not device:get_field('ws_client') then
-      local retrytimer = device:get_field('retrytimer')
-      if retrytimer then
-        driver:cancel_timer(retrytimer)
-        device:set_field('retrytimer', nil)
+    if not connected then
+      if device:get_field('screen_off_mode') then
+        device:set_field('screen_on_requested', true)
       end
-      schedule_reconnect(device)
+      local wake_sent = wol.do_wakeonlan(device.preferences.macaddr, device.preferences.bcastaddr)
+      if wake_sent then
+        local now = socket.gettime()
+        device:set_field('wake_retry_until', now + WAKE_RETRY_WINDOW)
+        device:set_field('last_wol_at', now)
+        local sock = device:get_field('ws_sock')
+        clear_connection(device, sock, true)
+        device:offline()
+      end
+
+      if not device:get_field('ws_client') then
+        local retrytimer = device:get_field('retrytimer')
+        if retrytimer then
+          driver:cancel_timer(retrytimer)
+          device:set_field('retrytimer', nil)
+        end
+        schedule_reconnect(device)
+      end
     end
   else
     device:set_field('wake_retry_until', nil)
     device:set_field('last_wol_at', nil)
-    send_command(device, build_messsage("request", "ssap://system/turnOff"))
+    if device.preferences.keepConnectionWhenOff ~= false then
+      if device:get_field('ws_client') then
+        if send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/turnOffScreen")) then
+          device:set_field('screen_off_mode', true, { ['persist'] = true })
+        end
+      else
+        log.info('Screen-off request skipped while disconnected; reconnecting')
+        schedule_reconnect(device)
+      end
+    else
+      device:set_field('screen_off_mode', false, { ['persist'] = true })
+      if device:get_field('ws_client') then
+        send_command(device, build_messsage("request", "ssap://system/turnOff"))
+      else
+        log.info('Power-off request skipped while disconnected; reconnecting')
+        schedule_reconnect(device)
+      end
+    end
   end
   
 end

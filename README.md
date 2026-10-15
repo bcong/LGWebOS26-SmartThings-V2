@@ -151,6 +151,7 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 - 예전 `DLNADEVICENAME` 형식뿐 아니라 LG/webOS service, server, name marker 인식
 - 10초 간격 WebSocket heartbeat와 30초 PONG timeout으로 유휴 연결 감시
 - WebSocket CLOSE/error/timeout을 동일한 재연결 경로로 처리하고 중복 재연결 타이머 방지; 연결 실패 시 5초 간격 재시도
+- 화면만 끄고 WebSocket을 유지하는 모드 지원; TV 전원은 실제 standby가 아니라 켜진 상태로 남음
 - 전원 켜기 시 WOL 패킷 3회 전송, 최대 2분간 15초마다 재전송하고 WebSocket은 5초 간격으로 재접속
 - 명령 전송 실패 시 즉시 재연결하고, DHCP/IP 변경을 주기적으로 감지해 주소 갱신
 
@@ -163,6 +164,8 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 5. TV 설정에서 `TV On With Mobile` 또는 Wi-Fi를 통한 전원 켜기를 활성화합니다.
 
 TV가 대기 중 네트워크를 끄면 WebSocket heartbeat만으로 연결을 유지할 수 없습니다. 이때 드라이버는 WOL 패킷을 보내고 WebSocket 재접속을 시도하므로, TV의 네트워크 대기/원격 전원 켜기가 활성화되어 있어야 합니다.
+
+기기 설정의 `Keep WebSocket Active Screen Off`는 기본 활성화되어 있습니다. 켜져 있으면 SmartThings 전원 끄기는 화면만 끄고 TV와 WebSocket은 계속 실행합니다. 실제 전원 standby를 원하면 이 옵션을 끄세요.
 
 설치된 드라이버의 로그는 다음 명령으로 확인할 수 있습니다.
 
