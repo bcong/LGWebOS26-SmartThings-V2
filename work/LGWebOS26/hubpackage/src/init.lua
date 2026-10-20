@@ -46,6 +46,8 @@ local applists = {}
 cap_lgmsg = capabilities["partyvoice23922.lgmessage"]
 cap_lginput = capabilities["partyvoice23922.lgmediainputsource"]
 cap_status = capabilities["partyvoice23922.status"]
+cap_power_state = capabilities["mirrordouble43237.lgpowerstate"]
+cap_screen_state = capabilities["mirrordouble43237.lgscreenstate"]
 cap_channel = capabilities["partyvoice23922.lgcurrentchannel"]
 cap_app = capabilities["partyvoice23922.lgcurrentapp"]
 cap_channel_number = capabilities["partyvoice23922.lgchannelnumber"]
@@ -204,7 +206,15 @@ local function init_device(device)
     if send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/turnOnScreen")) then
       device:set_field('screen_on_requested', nil)
       device:set_field('screen_off_mode', false, { ['persist'] = true })
-      device:emit_event(capabilities.switch.switch('on'))
+      send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/getPowerState"))
+    end
+  elseif device:get_field('screen_off_mode') then
+    local screen_off_uri = device.preferences.keepConnectionWhenOff ~= false
+      and "ssap://com.webos.service.tvpower/power/turnOffScreen"
+      or "ssap://system/turnOff"
+    if send_command(device, build_messsage("request", screen_off_uri)) then
+      device:set_field('screen_off_mode', screen_off_uri ~= "ssap://system/turnOff", { ['persist'] = true })
+      send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/getPowerState"))
     end
   end
   
@@ -222,11 +232,18 @@ local function parse_response(device, payload)
   for key, value in pairs(payload) do
   
     if key == 'state' then
-      if device:get_field('screen_off_mode')
-        or (value == 'Suspend') or (value == 'Request Suspend') then
-        device:emit_event(capabilities.switch.switch('off'))
-      else
+      local tv_is_on = value ~= 'Power Off'
+        and value ~= 'Suspend'
+        and value ~= 'Request Suspend'
+        and value ~= 'Active Standby'
+      local power_state = tv_is_on and 'on' or 'off'
+      local screen_is_on = tv_is_on and value ~= 'Screen Off'
+      device:emit_event(cap_power_state.powerState(power_state))
+      device:emit_event(cap_screen_state.screenState(screen_is_on and 'on' or 'off'))
+      if screen_is_on then
         device:emit_event(capabilities.switch.switch('on'))
+      else
+        device:emit_event(capabilities.switch.switch('off'))
       end
       
     elseif key == 'volume' then
@@ -409,6 +426,8 @@ clear_connection = function(device, sock, close_socket)
 
   device:set_field('ws_client', nil)
   device:set_field('ws_sock', nil)
+  device:emit_event(cap_power_state.powerState('unknown'))
+  device:emit_event(cap_screen_state.screenState('unknown'))
 
 end
 
@@ -487,6 +506,9 @@ end
 
 -- Initialize hub connection
 function init_connection(device)
+
+  device:emit_event(cap_power_state.powerState('unknown'))
+  device:emit_event(cap_screen_state.screenState('unknown'))
 
   if not device:get_field('lg_registration_key') then
     device:set_field('unsigned_pairing_attempted', false)
@@ -654,7 +676,6 @@ end
 local function handle_switch(driver, device, command)
 
   log.debug ('Switch changed to', command.command)
-  device:emit_event(capabilities.switch.switch(command.command))
   
   if command.command == 'on' then
     local connected = device:get_field('ws_client') ~= nil
@@ -663,6 +684,7 @@ local function handle_switch(driver, device, command)
       connected = send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/turnOnScreen"))
       if connected then
         device:set_field('screen_off_mode', false, { ['persist'] = true })
+        send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/getPowerState"))
       end
     end
 
@@ -696,6 +718,7 @@ local function handle_switch(driver, device, command)
       if device:get_field('ws_client') then
         if send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/turnOffScreen")) then
           device:set_field('screen_off_mode', true, { ['persist'] = true })
+          send_command(device, build_messsage("request", "ssap://com.webos.service.tvpower/power/getPowerState"))
         end
       else
         log.info('Screen-off request skipped while disconnected; reconnecting')
@@ -876,6 +899,8 @@ local function device_added (driver, device)
 
   
   device:emit_event(capabilities.switch.switch.off())
+  device:emit_event(cap_power_state.powerState('unknown'))
+  device:emit_event(cap_screen_state.screenState('unknown'))
   device:emit_event(cap_lginput.inputsource('HDMI 1'))
   device:emit_event(capabilities.audioVolume.volume(50))
   device:emit_event(capabilities.audioMute.mute('unmuted'))

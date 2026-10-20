@@ -1,0 +1,19 @@
+{
+    "name": "lgscreenstate",
+    "attributes": {
+        "screenState": {
+            "schema": {
+                "title": "TV screen state",
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "enum": ["on", "off", "unknown"]
+                    }
+                },
+                "required": ["value"],
+                "additionalProperties": false
+            }
+        }
+    }
+}

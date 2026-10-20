@@ -1,0 +1,30 @@
+{
+    "id": "mirrordouble43237.lgscreenstate",
+    "version": 1,
+    "dashboard": {
+        "states": [
+            {
+                "label": "Screen: {{screenState.value}}",
+                "alternatives": [
+                    { "key": "on", "value": "On" },
+                    { "key": "off", "value": "Off" },
+                    { "key": "unknown", "value": "Unknown" }
+                ]
+            }
+        ]
+    },
+    "detailView": [
+        {
+            "label": "Screen State",
+            "displayType": "state",
+            "state": {
+                "label": "{{screenState.value}}",
+                "alternatives": [
+                    { "key": "on", "value": "On" },
+                    { "key": "off", "value": "Off" },
+                    { "key": "unknown", "value": "Unknown" }
+                ]
+            }
+        }
+    ]
+}

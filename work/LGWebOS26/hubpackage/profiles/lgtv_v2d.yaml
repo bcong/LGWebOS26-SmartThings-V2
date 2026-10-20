@@ -28,13 +28,17 @@ components:
             version: 1
           - id: partyvoice23922.status
             version: 1
+          - id: mirrordouble43237.lgpowerstate
+            version: 1
+          - id: mirrordouble43237.lgscreenstate
+            version: 1
           - id: refresh
             version: 1
       categories:
           - name: Television
 metadata:
     mnmn: SmartThingsCommunity
-    vid: 9f26e1fc-b824-39e0-a88e-b9d3bf5152c0
+    vid: 69cbf117-2f5b-35f3-96a1-3d0913000001
     ocfDeviceType: oic.d.tv
 preferences:
     - title: "Refresh Frequency"

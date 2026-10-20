@@ -1,0 +1,30 @@
+{
+    "id": "mirrordouble43237.lgpowerstate",
+    "version": 1,
+    "dashboard": {
+        "states": [
+            {
+                "label": "TV Power: {{powerState.value}}",
+                "alternatives": [
+                    { "key": "on", "value": "On" },
+                    { "key": "off", "value": "Off" },
+                    { "key": "unknown", "value": "Unknown" }
+                ]
+            }
+        ]
+    },
+    "detailView": [
+        {
+            "label": "TV Power State",
+            "displayType": "state",
+            "state": {
+                "label": "{{powerState.value}}",
+                "alternatives": [
+                    { "key": "on", "value": "On" },
+                    { "key": "off", "value": "Off" },
+                    { "key": "unknown", "value": "Unknown" }
+                ]
+            }
+        }
+    ]
+}

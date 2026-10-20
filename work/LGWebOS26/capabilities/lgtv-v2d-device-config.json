@@ -1,0 +1,59 @@
+{
+    "type": "profile",
+    "dashboard": {
+        "states": [
+            { "component": "main", "capability": "switch", "version": 1 },
+            { "component": "main", "capability": "mirrordouble43237.lgpowerstate", "version": 1 },
+            { "component": "main", "capability": "mirrordouble43237.lgscreenstate", "version": 1 }
+        ],
+        "actions": [{ "component": "main", "capability": "switch", "version": 1 }]
+    },
+    "detailView": [
+        { "component": "main", "capability": "switch", "version": 1 },
+        { "component": "main", "capability": "audioVolume", "version": 1 },
+        { "component": "main", "capability": "audioMute", "version": 1 },
+        { "component": "main", "capability": "partyvoice23922.lgvolumeup", "version": 1 },
+        { "component": "main", "capability": "partyvoice23922.lgvolumedown", "version": 1 },
+        { "component": "main", "capability": "partyvoice23922.lgmediainputsource", "version": 1 },
+        { "component": "main", "capability": "partyvoice23922.lgcurrentapp", "version": 1 },
+        {
+            "component": "main",
+            "capability": "mediaPresets",
+            "version": 1,
+            "values": [{ "label": "Change App", "key": "presets.value" }]
+        },
+        { "component": "main", "capability": "partyvoice23922.lgcurrentchannel", "version": 1 },
+        { "component": "main", "capability": "tvChannel", "version": 1 },
+        { "component": "main", "capability": "partyvoice23922.lgmessage", "version": 1 },
+        { "component": "main", "capability": "partyvoice23922.status", "version": 1 },
+        { "component": "main", "capability": "mirrordouble43237.lgpowerstate", "version": 1 },
+        { "component": "main", "capability": "mirrordouble43237.lgscreenstate", "version": 1 },
+        { "component": "main", "capability": "refresh", "version": 1 }
+    ],
+    "automation": {
+        "conditions": [
+            { "component": "main", "capability": "switch", "version": 1 },
+            { "component": "main", "capability": "audioVolume", "version": 1 },
+            { "component": "main", "capability": "audioMute", "version": 1 },
+            { "component": "main", "capability": "partyvoice23922.lgmediainputsource", "version": 1 },
+            { "component": "main", "capability": "partyvoice23922.lgcurrentapp", "version": 1 },
+            { "component": "main", "capability": "partyvoice23922.lgchannelnumber", "version": 1 }
+        ],
+        "actions": [
+            { "component": "main", "capability": "switch", "version": 1 },
+            { "component": "main", "capability": "audioVolume", "version": 1 },
+            { "component": "main", "capability": "partyvoice23922.lgvolumeup", "version": 1 },
+            { "component": "main", "capability": "partyvoice23922.lgvolumedown", "version": 1 },
+            { "component": "main", "capability": "audioMute", "version": 1 },
+            { "component": "main", "capability": "partyvoice23922.lgmediainputsource", "version": 1 },
+            {
+                "component": "main",
+                "capability": "mediaPresets",
+                "version": 1,
+                "values": [{ "label": "Activate App ID", "key": "presets.value" }]
+            },
+            { "component": "main", "capability": "partyvoice23922.lgmessage", "version": 1 },
+            { "component": "main", "capability": "tvChannel", "version": 1 }
+        ]
+    }
+}

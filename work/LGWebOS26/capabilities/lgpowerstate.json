@@ -1,0 +1,19 @@
+{
+    "name": "lgpowerstate",
+    "attributes": {
+        "powerState": {
+            "schema": {
+                "title": "TV power state",
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string",
+                        "enum": ["on", "off", "unknown"]
+                    }
+                },
+                "required": ["value"],
+                "additionalProperties": false
+            }
+        }
+    }
+}
