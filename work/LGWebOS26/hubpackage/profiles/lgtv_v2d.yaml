@@ -4,6 +4,8 @@ components:
       capabilities:
           - id: switch
             version: 1
+          - id: mirrordouble43237.lgTvRemote
+            version: 1
           - id: audioVolume
             version: 1
           - id: audioMute
@@ -38,9 +40,16 @@ components:
           - name: Television
 metadata:
     mnmn: SmartThingsCommunity
-    vid: 69cbf117-2f5b-35f3-96a1-3d0913000001
+    vid: a16fe443-da47-3e65-bd7c-b0c4597753aa
     ocfDeviceType: oic.d.tv
 preferences:
+    - title: "Enable Remote Control"
+      name: enableRemoteControl
+      description: "Enables LG remote-button commands and the pointer input socket."
+      required: true
+      preferenceType: boolean
+      definition:
+          default: false
     - title: "Refresh Frequency"
       name: freq
       description: "Refresh data every n seconds"

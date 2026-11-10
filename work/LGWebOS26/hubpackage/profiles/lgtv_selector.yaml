@@ -1,0 +1,16 @@
+name: lgtv.selector
+components:
+    - id: main
+      capabilities:
+          - id: mediaPresets
+            version: 1
+          - id: partyvoice23922.status
+            version: 1
+          - id: refresh
+            version: 1
+      categories:
+          - name: Television
+metadata:
+    mnmn: SmartThingsCommunity
+    vid: b62050e0-42b1-3006-b13d-376828db4609
+    ocfDeviceType: oic.d.tv

@@ -1,0 +1,135 @@
+{
+    "name": "LG TV Remote",
+    "attributes": {
+        "inputSource": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "string"
+                    }
+                },
+                "required": ["value"],
+                "additionalProperties": false
+            },
+            "setter": "setInputSource",
+            "enumCommands": []
+        },
+        "supportedInputSources": {
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "value": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "required": ["value"],
+                "additionalProperties": false
+            }
+        }
+    },
+    "commands": {
+        "pressButton": {
+            "name": "pressButton",
+            "arguments": [
+                {
+                    "name": "key",
+                    "optional": false,
+                    "schema": {
+                        "type": "string",
+                        "enum": [
+                            "LEFT",
+                            "RIGHT",
+                            "UP",
+                            "DOWN",
+                            "RED",
+                            "GREEN",
+                            "YELLOW",
+                            "BLUE",
+                            "CHANNELUP",
+                            "CHANNELDOWN",
+                            "VOLUMEUP",
+                            "VOLUMEDOWN",
+                            "PLAY",
+                            "PAUSE",
+                            "STOP",
+                            "REWIND",
+                            "FASTFORWARD",
+                            "ASTERISK",
+                            "BACK",
+                            "EXIT",
+                            "ENTER",
+                            "AMAZON",
+                            "NETFLIX",
+                            "DISNEY_PLUS",
+                            "COUPANG_PLAY",
+                            "TVING",
+                            "LAFTEL",
+                            "3D_MODE",
+                            "AD",
+                            "ASPECT_RATIO",
+                            "CC",
+                            "DASH",
+                            "GUIDE",
+                            "HOME",
+                            "INFO",
+                            "INPUT_HUB",
+                            "LIST",
+                            "LIVE_ZOOM",
+                            "MAGNIFIER_ZOOM",
+                            "MENU",
+                            "MUTE",
+                            "MYAPPS",
+                            "POWER",
+                            "PROGRAM",
+                            "QMENU",
+                            "RECENT",
+                            "RECORD",
+                            "SAP",
+                            "SCREEN_REMOTE",
+                            "TELETEXT",
+                            "TEXTOPTION",
+                            "0",
+                            "1",
+                            "2",
+                            "3",
+                            "4",
+                            "5",
+                            "6",
+                            "7",
+                            "8",
+                            "9"
+                        ]
+                    }
+                }
+            ]
+        },
+        "setInputSource": {
+            "name": "setInputSource",
+            "arguments": [
+                {
+                    "name": "value",
+                    "optional": false,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        },
+        "selectRemoteInputSource": {
+            "name": "selectRemoteInputSource",
+            "arguments": [
+                {
+                    "name": "value",
+                    "optional": false,
+                    "schema": {
+                        "type": "string"
+                    }
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,788 @@
+<style>
+body {
+  margin: 0;
+}
+
+#lg-tv-remote,
+#lg-tv-remote * {
+  box-sizing: border-box;
+}
+
+#lg-tv-remote {
+  --surface-base: #141415;
+  --surface-raised: #1b1b1d;
+  --surface-active: #262628;
+  --line: rgba(237, 237, 237, 0.1);
+  --text-primary: #ededed;
+  --text-secondary: #a1a1a6;
+  --text-muted: #85858b;
+  width: 100%;
+  max-width: 368px;
+  max-height: 100vh;
+  margin: 0 auto;
+  padding: 16px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+#lg-tv-remote button,
+#lg-tv-remote select {
+  font: inherit;
+}
+
+#lg-tv-remote button {
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+
+#lg-tv-remote button:hover:not(:disabled) {
+  border-color: rgba(237, 237, 237, 0.2);
+  background: var(--surface-active);
+}
+
+#lg-tv-remote button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+#lg-tv-remote button:focus-visible,
+#lg-tv-remote select:focus-visible {
+  outline: 2px solid #ededed;
+  outline-offset: 2px;
+}
+
+#lg-tv-remote button:disabled,
+#lg-tv-remote select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+#lg-tv-remote .remote-header,
+#lg-tv-remote .section-heading,
+#lg-tv-remote .input-row,
+#lg-tv-remote .app-shortcuts,
+#lg-tv-remote .main-controls,
+#lg-tv-remote .side-controls,
+#lg-tv-remote .grid-3,
+#lg-tv-remote .grid-4,
+#lg-tv-remote .touchpad {
+  display: grid;
+  gap: 8px;
+}
+
+#lg-tv-remote .remote-header {
+  grid-template-columns: 1fr 64px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+#lg-tv-remote .identity {
+  min-width: 0;
+}
+
+#lg-tv-remote .local-device-picker {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#lg-tv-remote .local-device-picker[hidden],
+#lg-tv-remote[data-local-mode="true"] .input-panel {
+  display: none;
+}
+
+#lg-tv-remote .wordmark {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+#lg-tv-remote .wordmark span {
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+#lg-tv-remote .device-name,
+#lg-tv-remote .status {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#lg-tv-remote .status {
+  margin-top: 4px;
+}
+
+#lg-tv-remote .status[data-tone="error"] {
+  color: #f08a8d;
+}
+
+#lg-tv-remote .key--power {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-height: 64px;
+  border-color: #bf4a4b;
+  background: #bf4a4b;
+  color: #fff;
+  font-size: 11px;
+}
+
+#lg-tv-remote .key--power:hover:not(:disabled) {
+  border-color: #d65b5c;
+  background: #d65b5c;
+}
+
+#lg-tv-remote .key--power svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+#lg-tv-remote .input-panel,
+#lg-tv-remote .control-section {
+  margin-top: 16px;
+}
+
+#lg-tv-remote .input-panel {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-raised);
+}
+
+#lg-tv-remote .section-heading {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+#lg-tv-remote h2,
+#lg-tv-remote h3,
+#lg-tv-remote p {
+  margin: 0;
+}
+
+#lg-tv-remote h2 {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+#lg-tv-remote h3 {
+  margin-bottom: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+  text-align: center;
+}
+
+#lg-tv-remote .current-input {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+#lg-tv-remote .key--small {
+  min-height: 36px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+#lg-tv-remote .input-row {
+  grid-template-columns: minmax(0, 1fr) 72px;
+}
+
+#lg-tv-remote select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+#lg-tv-remote .key--apply {
+  min-height: 44px;
+  padding: 8px;
+  font-size: 13px;
+}
+
+#lg-tv-remote .app-shortcuts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+}
+
+#lg-tv-remote .key--app {
+  min-height: 40px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+#lg-tv-remote .main-controls {
+  grid-template-columns: 68px minmax(0, 1fr) 68px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+#lg-tv-remote .side-controls {
+  grid-template-columns: 1fr;
+}
+
+#lg-tv-remote .key--side {
+  min-height: 40px;
+  padding: 4px;
+  font-size: 12px;
+}
+
+#lg-tv-remote .touchpad {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  max-width: 200px;
+  aspect-ratio: 1;
+  justify-self: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-raised);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+
+#lg-tv-remote .touchpad:active:not(:disabled) {
+  cursor: grabbing;
+}
+
+#lg-tv-remote .touchpad-arrow {
+  color: var(--text-muted);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+#lg-tv-remote .touchpad-arrow--up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#lg-tv-remote .touchpad-arrow--left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+#lg-tv-remote .touchpad-arrow--right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+#lg-tv-remote .touchpad-arrow--down {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+#lg-tv-remote .touchpad-hint {
+  grid-column: 2;
+  grid-row: 2;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+#lg-tv-remote .section-label {
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+#lg-tv-remote .grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#lg-tv-remote .grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#lg-tv-remote .key--nav,
+#lg-tv-remote .key--media,
+#lg-tv-remote .key--number,
+#lg-tv-remote .key--extra {
+  min-height: 40px;
+  padding: 4px;
+  font-size: 12px;
+}
+
+#lg-tv-remote .key--number {
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+#lg-tv-remote .key--color-red {
+  background: #bf4a4b;
+  color: #fff;
+}
+
+#lg-tv-remote .key--color-green {
+  background: #397458;
+  color: #fff;
+}
+
+#lg-tv-remote .key--color-yellow {
+  background: #c5a54a;
+  color: #201c12;
+}
+
+#lg-tv-remote .key--color-blue {
+  background: #496b9c;
+  color: #fff;
+}
+
+#lg-tv-remote .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 340px) {
+  #lg-tv-remote {
+    padding: 12px;
+  }
+
+  #lg-tv-remote .main-controls {
+    grid-template-columns: 1fr;
+  }
+
+  #lg-tv-remote .side-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #lg-tv-remote .side-controls h3 {
+    grid-column: 1 / -1;
+  }
+
+  #lg-tv-remote .side-control--channel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #lg-tv-remote .side-control--channel h3 {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #lg-tv-remote button {
+    transition: none;
+  }
+}
+</style>
+
+<main id="lg-tv-remote" aria-label="LG webOS TV 리모컨">
+  <header class="remote-header">
+    <div class="identity">
+      <div class="wordmark">LG <span>webOS</span></div>
+      <div class="device-name" id="tv-name">TV 선택 필요</div>
+      <div class="local-device-picker" id="local-device-picker" hidden>
+        <label class="sr-only" for="local-tv-select">LG TV 선택</label>
+        <select id="local-tv-select" disabled></select>
+      </div>
+      <p class="status" id="remote-status" aria-live="polite">SharpTools 기기 연결 대기</p>
+    </div>
+    <button class="key--power" type="button" data-key="POWER" aria-label="전원">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3v9"></path>
+        <path d="M6.2 6.8a8 8 0 1 0 11.6 0"></path>
+      </svg>
+      <span>전원</span>
+    </button>
+  </header>
+
+  <section class="input-panel" aria-labelledby="input-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="input-title">입력</h2>
+        <p class="current-input" id="current-input">현재 입력 확인 중</p>
+      </div>
+      <button class="key--small" type="button" data-key="INPUT_HUB">입력 목록</button>
+    </div>
+    <div class="input-row">
+      <label class="sr-only" for="input-source">입력 소스 선택</label>
+      <select id="input-source" disabled>
+        <option value="">TV 입력 목록 대기</option>
+      </select>
+      <button class="key--apply" type="button" id="apply-input" disabled>전환</button>
+    </div>
+  </section>
+
+  <div class="app-shortcuts" aria-label="앱 바로가기">
+    <button class="key--app" type="button" data-key="AMAZON">Amazon</button>
+    <button class="key--app" type="button" data-key="DISNEY_PLUS">Disney+</button>
+    <button class="key--app" type="button" data-key="COUPANG_PLAY">Coupang Play</button>
+    <button class="key--app" type="button" data-key="TVING">TVING</button>
+    <button class="key--app" type="button" data-key="LAFTEL">Laftel</button>
+  </div>
+
+  <section class="main-controls" aria-label="방향, 음량 및 채널">
+    <div class="side-controls">
+      <h3>음량</h3>
+      <button class="key--side" type="button" data-key="VOLUMEUP" aria-label="음량 올리기">+</button>
+      <button class="key--side" type="button" data-key="MUTE">음소거</button>
+      <button class="key--side" type="button" data-key="VOLUMEDOWN" aria-label="음량 내리기">−</button>
+    </div>
+    <button
+      class="touchpad"
+      type="button"
+      id="touchpad"
+      aria-label="방향 패드. 드래그하여 이동하고 탭하여 확인"
+      disabled
+    >
+      <span class="touchpad-arrow touchpad-arrow--up" aria-hidden="true">↑</span>
+      <span class="touchpad-arrow touchpad-arrow--left" aria-hidden="true">←</span>
+      <span class="touchpad-arrow touchpad-arrow--right" aria-hidden="true">→</span>
+      <span class="touchpad-arrow touchpad-arrow--down" aria-hidden="true">↓</span>
+      <span class="touchpad-hint" aria-hidden="true">드래그하여 이동<br>탭하여 확인</span>
+    </button>
+    <div class="side-controls side-control--channel">
+      <h3>채널</h3>
+      <button class="key--side" type="button" data-key="CHANNELUP" aria-label="채널 올리기">+</button>
+      <button class="key--side" type="button" data-key="CHANNELDOWN" aria-label="채널 내리기">−</button>
+    </div>
+  </section>
+
+  <section class="control-section" aria-labelledby="navigation-title">
+    <h2 class="section-label" id="navigation-title">이동 및 메뉴</h2>
+    <div class="grid-3">
+      <button class="key--nav" type="button" data-key="HOME">홈</button>
+      <button class="key--nav" type="button" data-key="BACK">뒤로</button>
+      <button class="key--nav" type="button" data-key="EXIT">종료</button>
+      <button class="key--nav" type="button" data-key="MENU">메뉴</button>
+      <button class="key--nav" type="button" data-key="QMENU">빠른 설정</button>
+      <button class="key--nav" type="button" data-key="RECENT">최근 항목</button>
+      <button class="key--nav" type="button" data-key="MYAPPS">내 앱</button>
+      <button class="key--nav" type="button" data-key="LIST">목록</button>
+      <button class="key--nav" type="button" data-key="GUIDE">방송 안내</button>
+      <button class="key--nav" type="button" data-key="INFO">정보</button>
+      <button class="key--nav" type="button" data-key="PROGRAM">프로그램</button>
+      <button class="key--nav" type="button" data-key="CC">자막</button>
+    </div>
+  </section>
+
+  <section class="control-section" aria-labelledby="playback-title">
+    <h2 class="section-label" id="playback-title">재생</h2>
+    <div class="grid-3">
+      <button class="key--media" type="button" data-key="REWIND">되감기</button>
+      <button class="key--media" type="button" data-key="PLAY">재생</button>
+      <button class="key--media" type="button" data-key="PAUSE">일시 정지</button>
+      <button class="key--media" type="button" data-key="STOP">정지</button>
+      <button class="key--media" type="button" data-key="FASTFORWARD">빨리 감기</button>
+      <button class="key--media" type="button" data-key="RECORD">녹화</button>
+    </div>
+  </section>
+
+  <section class="control-section" aria-labelledby="number-title">
+    <h2 class="section-label" id="number-title">숫자</h2>
+    <div class="grid-3">
+      <button class="key--number" type="button" data-key="1">1</button>
+      <button class="key--number" type="button" data-key="2">2</button>
+      <button class="key--number" type="button" data-key="3">3</button>
+      <button class="key--number" type="button" data-key="4">4</button>
+      <button class="key--number" type="button" data-key="5">5</button>
+      <button class="key--number" type="button" data-key="6">6</button>
+      <button class="key--number" type="button" data-key="7">7</button>
+      <button class="key--number" type="button" data-key="8">8</button>
+      <button class="key--number" type="button" data-key="9">9</button>
+      <button class="key--number" type="button" data-key="DASH">−</button>
+      <button class="key--number" type="button" data-key="0">0</button>
+      <button class="key--number" type="button" data-key="ASTERISK">*</button>
+    </div>
+  </section>
+
+  <section class="control-section" aria-labelledby="color-title">
+    <h2 class="section-label" id="color-title">색상</h2>
+    <div class="grid-4">
+      <button class="key--extra key--color-red" type="button" data-key="RED">빨강</button>
+      <button class="key--extra key--color-green" type="button" data-key="GREEN">초록</button>
+      <button class="key--extra key--color-yellow" type="button" data-key="YELLOW">노랑</button>
+      <button class="key--extra key--color-blue" type="button" data-key="BLUE">파랑</button>
+    </div>
+  </section>
+
+  <section class="control-section" aria-labelledby="extra-title">
+    <h2 class="section-label" id="extra-title">추가 기능</h2>
+    <div class="grid-3">
+      <button class="key--extra" type="button" data-key="3D_MODE">3D 모드</button>
+      <button class="key--extra" type="button" data-key="AD">화면 해설</button>
+      <button class="key--extra" type="button" data-key="ASPECT_RATIO">화면 비율</button>
+      <button class="key--extra" type="button" data-key="LIVE_ZOOM">라이브 줌</button>
+      <button class="key--extra" type="button" data-key="MAGNIFIER_ZOOM">확대</button>
+      <button class="key--extra" type="button" data-key="SAP">SAP</button>
+      <button class="key--extra" type="button" data-key="SCREEN_REMOTE">화면 리모컨</button>
+      <button class="key--extra" type="button" data-key="TELETEXT">텔레텍스트</button>
+      <button class="key--extra" type="button" data-key="TEXTOPTION">텍스트 옵션</button>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.sharptools.io/js/custom-tiles/0.2.1/stio.js"></script>
+<script>
+(function () {
+  var root = document.getElementById("lg-tv-remote");
+  var keyButtons = Array.prototype.slice.call(root.querySelectorAll("[data-key]"));
+  var inputSelect = root.querySelector("#input-source");
+  var applyInput = root.querySelector("#apply-input");
+  var currentInputLabel = root.querySelector("#current-input");
+  var deviceName = root.querySelector("#tv-name");
+  var status = root.querySelector("#remote-status");
+  var touchpad = root.querySelector("#touchpad");
+  var tv = null;
+  var supportedInputs = [];
+  var selectedInput = "";
+  var padPointer = null;
+  var suppressPadClickUntil = 0;
+  var padStep = 32;
+
+  function setStatus(message, tone) {
+    status.textContent = message;
+    status.dataset.tone = tone || "";
+  }
+
+  function refreshInputOptions() {
+    var previousValue = inputSelect.value;
+    var options = supportedInputs.slice();
+    if (selectedInput && options.indexOf(selectedInput) === -1) {
+      options.unshift(selectedInput);
+    }
+
+    inputSelect.replaceChildren();
+    var placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = options.length ? "입력 선택" : "입력 목록 없음";
+    inputSelect.appendChild(placeholder);
+
+    options.forEach(function (value) {
+      var option = document.createElement("option");
+      option.value = value;
+      option.textContent = value;
+      inputSelect.appendChild(option);
+    });
+
+    if (selectedInput && options.indexOf(selectedInput) !== -1) {
+      inputSelect.value = selectedInput;
+    } else if (previousValue && options.indexOf(previousValue) !== -1) {
+      inputSelect.value = previousValue;
+    }
+
+    currentInputLabel.textContent = selectedInput ? "현재 입력: " + selectedInput : "현재 입력 확인 중";
+    inputSelect.disabled = !tv || options.length === 0;
+    applyInput.disabled = !tv || !inputSelect.value;
+  }
+
+  function sendCommand(command, args, successMessage) {
+    if (!tv) {
+      setStatus(window.LG_TV_REMOTE_LOCAL
+        ? "SmartThings에 추가된 LG TV가 없습니다"
+        : "타일 설정에서 LG TV를 선택하세요", "error");
+      return;
+    }
+
+    Promise.resolve().then(function () {
+      return tv.sendCommand(command, args);
+    }).then(function () {
+      setStatus(successMessage || "명령을 전송했습니다");
+    }).catch(function (error) {
+      console.error("LG TV remote command failed", error);
+      setStatus("명령 전송에 실패했습니다", "error");
+    });
+  }
+
+  keyButtons.forEach(function (button) {
+    button.disabled = true;
+    button.addEventListener("click", function () {
+      sendCommand("pressButton", [button.dataset.key]);
+    });
+  });
+
+  touchpad.addEventListener("pointerdown", function (event) {
+    if (touchpad.disabled || event.button !== 0) {
+      return;
+    }
+
+    event.preventDefault();
+    padPointer = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      deltaX: 0,
+      deltaY: 0,
+      moved: false
+    };
+    if (typeof touchpad.setPointerCapture === "function") {
+      touchpad.setPointerCapture(event.pointerId);
+    }
+  });
+
+  touchpad.addEventListener("pointermove", function (event) {
+    if (!padPointer || padPointer.id !== event.pointerId) {
+      return;
+    }
+
+    event.preventDefault();
+    padPointer.deltaX += event.clientX - padPointer.x;
+    padPointer.deltaY += event.clientY - padPointer.y;
+    padPointer.x = event.clientX;
+    padPointer.y = event.clientY;
+
+    var steps = 0;
+    while (steps < 3) {
+      var absX = Math.abs(padPointer.deltaX);
+      var absY = Math.abs(padPointer.deltaY);
+      if (Math.max(absX, absY) < padStep) {
+        break;
+      }
+
+      var key;
+      if (absX >= absY) {
+        key = padPointer.deltaX > 0 ? "RIGHT" : "LEFT";
+        padPointer.deltaX += padPointer.deltaX > 0 ? -padStep : padStep;
+      } else {
+        key = padPointer.deltaY > 0 ? "DOWN" : "UP";
+        padPointer.deltaY += padPointer.deltaY > 0 ? -padStep : padStep;
+      }
+
+      padPointer.moved = true;
+      sendCommand("pressButton", [key], "이동 명령을 전송했습니다");
+      steps += 1;
+    }
+  });
+
+  function finishPadPointer(event, cancelled) {
+    if (!padPointer || padPointer.id !== event.pointerId) {
+      return;
+    }
+    if (!cancelled && padPointer.moved) {
+      suppressPadClickUntil = Date.now() + 250;
+    } else if (!cancelled) {
+      suppressPadClickUntil = Date.now() + 250;
+      sendCommand("pressButton", ["ENTER"], "확인 명령을 전송했습니다");
+    }
+    padPointer = null;
+  }
+
+  touchpad.addEventListener("pointerup", function (event) {
+    finishPadPointer(event, false);
+  });
+  touchpad.addEventListener("pointercancel", function (event) {
+    finishPadPointer(event, true);
+  });
+  touchpad.addEventListener("click", function (event) {
+    if (Date.now() < suppressPadClickUntil) {
+      event.preventDefault();
+      return;
+    }
+    sendCommand("pressButton", ["ENTER"], "확인 명령을 전송했습니다");
+  });
+  touchpad.addEventListener("keydown", function (event) {
+    var directions = {
+      ArrowUp: "UP",
+      ArrowDown: "DOWN",
+      ArrowLeft: "LEFT",
+      ArrowRight: "RIGHT"
+    };
+    var key = directions[event.key];
+    if (key) {
+      event.preventDefault();
+      sendCommand("pressButton", [key], "이동 명령을 전송했습니다");
+    }
+  });
+
+  inputSelect.addEventListener("change", function () {
+    applyInput.disabled = !tv || !inputSelect.value;
+  });
+
+  applyInput.addEventListener("click", function () {
+    if (inputSelect.value) {
+      sendCommand("selectRemoteInputSource", [inputSelect.value], "입력 전환 명령을 전송했습니다");
+    }
+  });
+
+  if (!window.stio || typeof window.stio.ready !== "function") {
+    setStatus("SharpTools 연결이 필요합니다");
+    return;
+  }
+
+  window.stio.ready(function (data) {
+    tv = data && data.settings ? data.settings.tv : null;
+    if (!tv || typeof tv.sendCommand !== "function") {
+      setStatus(window.LG_TV_REMOTE_LOCAL
+        ? "SmartThings에 추가된 LG TV가 없습니다"
+        : "타일 설정에서 LG TV를 선택하세요");
+      return;
+    }
+
+    deviceName.textContent = tv.name || "LG TV";
+    setStatus(window.LG_TV_REMOTE_LOCAL ? "브라우저 리모컨 연결됨" : "SharpTools 기기 선택됨");
+    keyButtons.forEach(function (button) {
+      button.disabled = false;
+    });
+    touchpad.disabled = false;
+
+    var attributes = tv.attributes || {};
+    var sourcesAttribute = attributes.supportedInputSources;
+    var currentAttribute = attributes.inputSource;
+
+    if (sourcesAttribute) {
+      supportedInputs = Array.isArray(sourcesAttribute.value)
+        ? sourcesAttribute.value.filter(function (value) {
+            return typeof value === "string" && value !== "unknown";
+          })
+        : [];
+      if (typeof sourcesAttribute.onValue === "function") {
+        sourcesAttribute.onValue(function (value) {
+          supportedInputs = Array.isArray(value)
+            ? value.filter(function (input) {
+                return typeof input === "string" && input !== "unknown";
+              })
+            : [];
+          refreshInputOptions();
+        });
+      }
+    }
+
+    if (currentAttribute) {
+      selectedInput = typeof currentAttribute.value === "string" && currentAttribute.value !== "unknown"
+        ? currentAttribute.value
+        : "";
+      if (typeof currentAttribute.onValue === "function") {
+        currentAttribute.onValue(function (value) {
+          selectedInput = typeof value === "string" && value !== "unknown" ? value : "";
+          refreshInputOptions();
+        });
+      }
+    }
+
+    refreshInputOptions();
+  });
+})();
+</script>

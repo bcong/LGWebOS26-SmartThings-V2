@@ -25,7 +25,7 @@ CLI 채널은 초대받은 사용자에게만 공유됩니다. SmartThings 기�
 - Channel: `LG webOS 26 Compatibility`
 - Driver ID: `63c66b59-1c9a-4d63-9b4b-766c9406385c`
 - Package key: `seop.lgtv.webos26.v2`
-- Latest deployed version: `2026-09-17T09:58:33.819926428`
+- Latest deployed version: `2026-11-10T02:38:45.260550112`
 - 초대 URL: [SmartThings 채널 초대 링크](https://bestow-regional.api.smartthings.com/invite/3X21QoBZ8O2R)
 
 위 초대 URL을 열고 채널 초대를 수락한 다음 SmartThings 앱에서 공유 채널의 드라이버를 Hub에 설치합니다.
@@ -86,6 +86,28 @@ smartthings edge:channels:create
 
 ### 3. 드라이버 업로드
 
+리모컨 capability와 capability presentation은 기존 SmartThings 계정에 한 번 등록해야 합니다. 새 계정에서 처음 등록할 때는 다음을 실행합니다.
+
+```powershell
+smartthings capabilities:create -n mirrordouble43237 -i .\work\LGWebOS26\capabilities\lgremotecontrol.json
+smartthings capabilities:presentation:create mirrordouble43237.lgTvRemote --capability-version 1 -i .\work\LGWebOS26\capabilities\lgremotecontrol-presentation.json
+```
+
+이미 `mirrordouble43237.lgTvRemote` capability가 등록되어 있다면 기존 버전에 고유 입력 전환 명령을 추가합니다. `selectRemoteInputSource`는 기기의 다른 capability에도 있는 `setInputSource`와 명령 이름이 겹치지 않도록 추가한 alias입니다.
+
+```powershell
+smartthings capabilities:update mirrordouble43237.lgTvRemote --capability-version 1 -i .\work\LGWebOS26\capabilities\lgremotecontrol.json --profile oauth
+smartthings capabilities:presentation:update mirrordouble43237.lgTvRemote --capability-version 1 -i .\work\LGWebOS26\capabilities\lgremotecontrol-presentation.json --profile oauth
+```
+
+capability 생성 결과의 ID를 프로필과 capability presentation에 동일하게 지정합니다. 수정한 리모컨 항목 구성을 SmartThings에 반영하고 새 `vid`를 발급받습니다.
+
+```powershell
+smartthings presentation:device-config:create -i .\work\LGWebOS26\capabilities\lgtv-v2d-device-config.json
+```
+
+명령 결과의 `vid`를 `hubpackage\profiles\lgtv_v2d.yaml`의 `metadata.vid`에 반영한 뒤 아래 명령으로 드라이버를 업로드합니다.
+
 저장소 루트에서 실행합니다.
 
 ```powershell
@@ -98,7 +120,7 @@ smartthings edge:drivers:package .\work\LGWebOS26\hubpackage --channel 0b04b476-
 
 ```powershell
 $env:SMARTTHINGS_PROFILE = "oauth"
-smartthings edge:drivers:package .\work\LGWebOS26\hubpackage --channel 0b04b476-b7c8-48be-92a5-97922a0441e1 --install --hub 00f21b64-3565-453d-bb39-23d4decbd678
+smartthings edge:drivers:package .\work\LGWebOS26\hubpackage --channel 0b04b476-b7c8-48be-92a5-97922a0441e1 --hub 00f21b64-3565-453d-bb39-23d4decbd678
 Remove-Item Env:SMARTTHINGS_PROFILE
 ```
 
@@ -148,6 +170,9 @@ CLI가 채널과 Hub를 묻지 않게 하려면 각 명령의 `--channel`과 `--
 - unsigned fallback에 `CONTROL_INPUT_TEXT`, `CONTROL_MOUSE_AND_KEYBOARD`, `READ_INSTALLED_APPS` 권한 포함
 - 여러 TV를 동시에 사용하는 경우 registration handshake 데이터를 TV별로 복제
 - SSDP 검색을 기존 단일 MediaRenderer 검색에서 `ssdp:all` 검색으로 확장
+- SmartThings 기기 화면에서 리모컨 항목 하나에 방향키, 숫자키, 음량/채널, 재생, 색상, 바로가기와 입력 선택 기능을 모아 제공
+- TV가 보고한 외부 입력 목록을 리모컨의 입력 선택 목록에 반영
+- 리모컨 키는 TV 모델/펌웨어에 따라 지원 여부가 다를 수 있으며, 음성 입력·휠/포인터 움직임·통합 리모컨 기기 제어는 webOS 네트워크 버튼 입력으로 동일하게 재현되지 않을 수 있음
 - 예전 `DLNADEVICENAME` 형식뿐 아니라 LG/webOS service, server, name marker 인식
 - 10초 간격 WebSocket heartbeat와 30초 PONG timeout으로 유휴 연결 감시
 - WebSocket CLOSE/error/timeout을 동일한 재연결 경로로 처리하고 중복 재연결 타이머 방지; 연결 실패 시 5초 간격 재시도
@@ -172,6 +197,37 @@ TV가 대기 중 네트워크를 끄면 WebSocket heartbeat만으로 연결을 �
 ```powershell
 smartthings edge:drivers:logcat <driver-id>
 ```
+
+## SmartThings에서 LG TV 선택 및 페어링
+
+드라이버를 설치한 뒤 SmartThings 앱에서 **기기 추가 → 주변 기기 검색**을 실행하면 `LG TV 선택기` 기기 하나가 추가됩니다. 선택기의 상세 화면에서 주변 LG TV 목록을 확인하고 원하는 TV를 선택하면 해당 TV만 SmartThings에 추가되고 연결/페어링이 시작됩니다. 선택 전까지는 주변 TV를 계속 재검색하며, TV를 선택하면 검색을 멈춥니다. LG TV 화면에 페어링 허용 팝업이 뜨면 허용하세요. 다시 검색하려면 선택기 화면을 새로고침합니다.
+
+새 드라이버는 주변 TV를 자동으로 추가하지 않습니다. 선택기 목록에는 주변 LG TV가 표시되고, 기존에 SmartThings에 추가된 TV는 `이미 추가됨`으로 구분됩니다. 새 TV를 선택하면 그 TV만 추가되며, 이미 추가된 TV를 선택하면 연결을 다시 시도합니다. 기존 기기는 자동 삭제되지 않습니다.
+
+## SharpTools 리모컨 타일
+
+실제 리모컨 형태의 UI는 SharpTools 대시보드용 Custom Tile로 제공합니다. [lg-tv-remote.html](work/LGWebOS26/sharptools/lg-tv-remote.html)은 SharpTools HTML 타일 편집기에 붙여 넣는 body 내용입니다. 파일을 전체 복사해 HTML 타일에 넣고 다음 Thing 설정을 추가합니다.
+
+- 설정 ID: `tv`
+- 유형: Thing
+- capability 필터: `mirrordouble43237.lgTvRemote`
+
+타일을 대시보드에 추가한 뒤 설정에서 SmartThings LG TV 기기를 선택합니다. 타일은 드라이버의 `pressButton`으로 전원, 방향, 홈/뒤로, Amazon·Disney+·Coupang Play·TVING·Laftel 앱 바로가기, 음량/채널, 숫자, 재생, 색상 및 기타 키를 보내고, TV가 보고한 입력 목록은 `selectRemoteInputSource`로 전환합니다. 앱 바로가기는 TV의 설치 앱 목록에서 앱 ID를 찾아 실행합니다. 입력 목록이 비어 있으면 직접 선택은 비활성화되며, `입력 목록` 버튼으로 TV 자체 입력 메뉴를 열 수 있습니다. 이전 드라이버는 `selectRemoteInputSource` 명령을 처리하지 않으므로 입력 직접 전환을 사용하려면 capability/presentation 업데이트 후 드라이버도 다시 패키징해 Hub에 설치해야 합니다.
+
+SmartThings 기본 capability 화면은 드래그 제스처를 지원하지 않아 원격 버튼을 표시하지 않습니다. SharpTools HTML Custom Tile의 중앙 패드에서 드래그하면 방향키가 전송되고, 짧게 누르면 확인이 전송됩니다. 별도 앱 설치 없이 휴대폰 브라우저에서 SharpTools 대시보드를 열어 사용할 수 있습니다. SharpTools 편집기 사용법은 [HTML Custom Tiles](https://docs.sharptools.io/developer-tools/custom-tiles/html) 및 [stio 라이브러리](https://docs.sharptools.io/developer-tools/custom-tiles/stio-lib)를 참고하세요.
+
+드라이버의 원격 버튼 명령과 포인터 입력 WebSocket은 기본적으로 꺼져 있습니다. 다시 사용할 경우 TV 기기 설정에서 **Enable Remote Control**을 켜세요. 꺼져 있는 동안 기존 원격 코드와 capability 파일은 보존되지만 원격 명령은 무시되고 포인터 WebSocket은 연결되지 않습니다.
+
+## SharpTools 없이 브라우저 리모컨 사용
+
+같은 네트워크에 있는 Windows PC에서 저장소 루트 기준으로 실행합니다. 추가 npm 패키지는 필요하지 않습니다.
+브라우저 리모컨을 사용하려면 먼저 해당 TV의 **Enable Remote Control** 설정을 켜야 합니다. 서버는 자동 실행되지 않으므로 사용하지 않을 때는 실행하지 마세요.
+
+```powershell
+node .\work\LGWebOS26\browser-remote\server.mjs
+```
+
+터미널에 표시되는 로컬 URL을 같은 Wi-Fi의 PC 또는 휴대폰 브라우저에서 엽니다. 페이지는 이 PC의 기존 SmartThings CLI `oauth` 프로필을 사용해 등록된 TV를 찾고 명령을 전달하므로 브라우저에서 SharpTools 계정에 로그인하지 않아도 됩니다. PC와 서버는 사용하는 동안 켜 둬야 하며, 출력된 접근 URL은 TV 제어 권한이 있으므로 공유하지 마세요. 종료하려면 터미널에서 `Ctrl+C`를 누릅니다.
 
 ## 출처 및 Fork 정보
 
